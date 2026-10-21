@@ -230,22 +230,35 @@ class PreprocessingPipeline:
         steps = []
         
         # Step 1: Imputation
-        pass
+        if imputer_strategy == "knn":
+            imputer = KNNImputer(n_neighbors=5)
+        else:
+            strategy = imputer_strategy if imputer_strategy in {"mean", "median", "most_frequent"} else "mean"
+            imputer = SimpleImputer(strategy=strategy)
+        steps.append(("imputer", imputer))
         
         # Step 2: Outlier handling
-        pass
+        steps.append(("outlier_handler", OutlierHandler(method=outlier_method)))
         
         # Step 3: Feature engineering
-        pass
+        if feature_engineering:
+            steps.append(("feature_engineer", FeatureEngineer()))
         
         # Step 4: Scaling
-        pass
+        scalers = {"standard": StandardScaler(), "robust": RobustScaler(),
+                   "minmax": MinMaxScaler()}
+        if scaler_type not in scalers:
+            raise ValueError(f"Unknown scaler type: {scaler_type}")
+        steps.append(("scaler", scalers[scaler_type]))
         
         # Step 5: Feature selection
-        pass
+        if feature_selection:
+            steps.append(("feature_selector", SelectKBest(f_classif, k=n_features)))
         
         # Step 6: Classifier
-        pass
+        steps.append(("classifier", LogisticRegression(
+            random_state=self.random_state, max_iter=1000
+        )))
         
         self.pipeline = Pipeline(steps)
         return self.pipeline
